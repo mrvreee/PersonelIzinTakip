@@ -183,7 +183,7 @@ tabloyuDoldur();
     private void bntExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bntExcelActionPerformed
     try {
     javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
-    fileChooser.setDialogTitle("Excel Olarak Kaydet");
+    fileChooser.setDialogTitle("Excel / CSV Olarak Kaydet");
     fileChooser.setSelectedFile(new java.io.File("Izin_Gecmisi_Raporu.csv"));
     
     int userSelection = fileChooser.showSaveDialog(this);
@@ -191,23 +191,30 @@ tabloyuDoldur();
     if (userSelection == javax.swing.JFileChooser.APPROVE_OPTION) {
         java.io.File fileToSave = fileChooser.getSelectedFile();
         
-        // Türkçe karakter sorunu olmaması için UTF-8 BOM ekliyoruz
         java.io.OutputStreamWriter writer = new java.io.OutputStreamWriter(
                 new java.io.FileOutputStream(fileToSave), java.nio.charset.StandardCharsets.UTF_8);
         
-        writer.write("\uFEFF"); // Excel'in Türkçe karakterleri düzgün okuması için BOM
+        writer.write("\uFEFF"); // UTF-8 BOM
         
-        // Başlıkları yaz
+        // Başlıklar
         for (int i = 0; i < jTable1.getColumnCount(); i++) {
             writer.write(jTable1.getColumnName(i) + (i == jTable1.getColumnCount() - 1 ? "" : ";"));
         }
         writer.write("\n");
         
-        // Tablodaki verileri (filtreye göre ekranda ne varsa) yaz
+        // Satırlar
         for (int row = 0; row < jTable1.getRowCount(); row++) {
             for (int col = 0; col < jTable1.getColumnCount(); col++) {
                 Object val = jTable1.getValueAt(row, col);
-                writer.write((val != null ? val.toString() : "") + (col == jTable1.getColumnCount() - 1 ? "" : ";"));
+                String cellValue = (val != null ? val.toString() : "");
+                
+                // Tarih sütunu ise (genellikle 3. indeks yani İzin Tarihi) veya tarih içeriyorsa:
+                // Excel'in ### yapmasını engellemek için tırnak içine alıyoruz
+                if (col == 3 || cellValue.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                    cellValue = "\"" + cellValue + "\t\""; // Metin formatına zorlar
+                }
+                
+                writer.write(cellValue + (col == jTable1.getColumnCount() - 1 ? "" : ";"));
             }
             writer.write("\n");
         }
@@ -222,11 +229,9 @@ tabloyuDoldur();
 
     private void btnPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPdfActionPerformed
     try {
-    // Tablo başlığı için metin hazırlıyoruz
     java.text.MessageFormat header = new java.text.MessageFormat("İzin Geçmişi Raporu");
     java.text.MessageFormat footer = new java.text.MessageFormat("Sayfa - {0}");
 
-    // Tabloyu yazdır/PDF yap diyalog penceresini açar
     boolean complete = jTable1.print(javax.swing.JTable.PrintMode.FIT_WIDTH, header, footer);
 
     if (complete) {

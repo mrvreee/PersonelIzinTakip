@@ -17,11 +17,10 @@ public class Personel {
     private int kullanilanIzin;
     private int kalanIzin;
 
-    // 1. Boş Constructor
     public Personel() {
     }
 
-    // 2. Parametreli Constructor (Veritabanından Nesne Oluştururken Çok Kolaylık Sağlar)
+
     public Personel(int personelID, String ad, String soyad, String tcNo, String sube, String gorev, String iseGirisTarihi, int hakEdilenIzin, int kullanilanIzin, int kalanIzin) {
         this.personelID = personelID;
         this.ad = ad;
@@ -35,7 +34,7 @@ public class Personel {
         this.kalanIzin = kalanIzin;
     }
 
-    // --- GETTER & SETTER METOTLARI ---
+
     public int getPersonelId() {
         return personelID;
     }

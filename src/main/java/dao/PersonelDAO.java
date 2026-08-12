@@ -614,8 +614,37 @@ public boolean topluPersonelEkle(java.util.List<Object[]> personelListesi) {
             psPersonel.setString(3, p.getTcNo());           
             psPersonel.setString(4, p.getSube());           
             psPersonel.setString(5, p.getGorev());          
-            psPersonel.setString(6, p.getIseGirisTarihi()); 
+            
+            // Tarih Formatı Dönüştürme (SQL Server İçin Kesin Çözüm)
+            java.sql.Date sqlTarih = null;
+            if (p.getIseGirisTarihi() != null && !p.getIseGirisTarihi().trim().isEmpty()) {
+                String tStr = p.getIseGirisTarihi().trim().replace("/", ".");
+                String[] parca = tStr.split("\\.");
+                
+                // GG.AA.YYYY formatında girildiyse YYYY-AA-GG formatına çevir
+                if (parca.length == 3) {
+                    if (parca[0].length() == 2 && parca[2].length() == 4) {
+                        tStr = parca[2] + "-" + parca[1] + "-" + parca[0];
+                    } else if (parca[0].length() == 4) {
+                        tStr = parca[0] + "-" + parca[1] + "-" + parca[2];
+                    }
+                }
+                
+                try {
+                    sqlTarih = java.sql.Date.valueOf(tStr);
+                } catch (Exception ex) {
+                    sqlTarih = null; // Hatalı tarih girildiyse null set et
+                }
+            }
+
+            if (sqlTarih != null) {
+                psPersonel.setDate(6, sqlTarih);
+            } else {
+                psPersonel.setNull(6, java.sql.Types.DATE);
+            }
+
             psPersonel.executeUpdate();
+
             try (ResultSet rs = psPersonel.getGeneratedKeys()) {
                 if (rs.next()) {
                     yeniPersonelId = rs.getInt(1);
@@ -633,11 +662,17 @@ public boolean topluPersonelEkle(java.util.List<Object[]> personelListesi) {
                 psIzin.executeUpdate();
             }
         }
+
         con.commit();
         return true;
+
     } catch (Exception e) {
         if (con != null) {
-            try { con.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            try {
+                con.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
         e.printStackTrace();
         return false;

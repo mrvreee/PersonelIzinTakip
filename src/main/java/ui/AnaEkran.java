@@ -91,6 +91,7 @@ public class AnaEkran extends javax.swing.JFrame {
         LbLKullanilan.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         LbLKullanilan.setText("Kullanılan : ");
 
+        LbLKalan.setBackground(new java.awt.Color(0, 0, 255));
         LbLKalan.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         LbLKalan.setText("Kalan : ");
 
@@ -245,7 +246,7 @@ public class AnaEkran extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtSoyadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtSoyadActionPerformed
-        // TODO add your handling code here:
+       
     }//GEN-LAST:event_txtSoyadActionPerformed
 
     private void btnAraActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAraActionPerformed
@@ -271,6 +272,7 @@ public class AnaEkran extends javax.swing.JFrame {
             LbLKalan.setText("Kalan : " + secilenPersonel.getKalanIzin());
             int kalan = secilenPersonel.getKalanIzin();
             LbLKalan.setText("Kalan : " + kalan);
+            
        
         if (kalan <= 3) {
             LbLKalan.setForeground(java.awt.Color.RED);
@@ -279,7 +281,7 @@ public class AnaEkran extends javax.swing.JFrame {
                 "Kritik İzin Uyarısı", 
                 JOptionPane.WARNING_MESSAGE);
         } else {
-            LbLKalan.setForeground(java.awt.Color.BLACK); 
+            LbLKalan.setForeground(java.awt.Color.WHITE); 
         }
    } else {
        if (evt != null) {
@@ -396,86 +398,124 @@ public class AnaEkran extends javax.swing.JFrame {
     }
     private void btnExcelAktarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExcelAktarActionPerformed
 javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
-    fileChooser.setDialogTitle("Personel Listesi Seç (CSV Formatında)");
+fileChooser.setDialogTitle("Personel Listesi Seç (CSV Formatında)");
+
+javax.swing.filechooser.FileNameExtensionFilter filter = 
+    new javax.swing.filechooser.FileNameExtensionFilter("CSV Dosyaları (*.csv)", "csv");
+fileChooser.setFileFilter(filter);
+
+int userSelection = fileChooser.showOpenDialog(this);
+
+if (userSelection == javax.swing.JFileChooser.APPROVE_OPTION) {
+    java.io.File fileToOpen = fileChooser.getSelectedFile();
+    java.util.List<Object[]> personelListesi = new java.util.ArrayList<>();
     
-    javax.swing.filechooser.FileNameExtensionFilter filter = 
-        new javax.swing.filechooser.FileNameExtensionFilter("CSV Dosyaları (*.csv)", "csv");
-    fileChooser.setFileFilter(filter);
+    try (java.io.BufferedReader br = new java.io.BufferedReader(
+            new java.io.InputStreamReader(new java.io.FileInputStream(fileToOpen), java.nio.charset.StandardCharsets.UTF_8))) {
 
-    int userSelection = fileChooser.showOpenDialog(this);
+        String line;
+        boolean ilkSatir = true;
 
-    if (userSelection == javax.swing.JFileChooser.APPROVE_OPTION) {
-        java.io.File fileToOpen = fileChooser.getSelectedFile();
-        java.util.List<Object[]> personelListesi = new java.util.ArrayList<>();
-        
-        try (java.io.BufferedReader br = new java.io.BufferedReader(
-                new java.io.InputStreamReader(new java.io.FileInputStream(fileToOpen), java.nio.charset.StandardCharsets.UTF_8))) {
+        while ((line = br.readLine()) != null) {
+            if (line == null || line.trim().isEmpty()) continue;
 
-            String line;
-            boolean ilkSatir = true;
-
-            while ((line = br.readLine()) != null) {
-                if (ilkSatir) {
-                    line = line.replace("\uFEFF", ""); // BOM temizliği
-                    ilkSatir = false;
-                    continue; 
-                }
-                String[] veriler = line.contains(";") ? line.split(";", -1) : line.split(",", -1);
-
-                if (veriler.length > 2) {
-                    String ad = veriler[1].trim();    
-                    String soyad = veriler[2].trim(); 
-
-                    String sube = (veriler.length > 5 && !veriler[5].trim().isEmpty()) ? veriler[5].trim() : "Merkez";
-                    String gorev = (veriler.length > 7 && !veriler[7].trim().isEmpty()) ? veriler[7].trim() : "Personel";
-
-                    int hakEdilen = 0, kullanilan = 0, kalan = 0;
-                    try {
-                        if (veriler.length > 17 && !veriler[17].trim().isEmpty()) 
-                            hakEdilen = Integer.parseInt(veriler[17].trim().replaceAll("[^0-9]", ""));
-                        if (veriler.length > 18 && !veriler[18].trim().isEmpty()) 
-                            kullanilan = Integer.parseInt(veriler[18].trim().replaceAll("[^0-9]", ""));
-                        if (veriler.length > 19 && !veriler[19].trim().isEmpty()) 
-                            kalan = Integer.parseInt(veriler[19].trim().replaceAll("[^0-9]", ""));
-                    } catch (Exception e) {
-               
-                    }
-
-                    if (!ad.isEmpty() || !soyad.isEmpty()) {
-                        personelListesi.add(new Object[]{ad, soyad, sube, gorev, hakEdilen, kullanilan, kalan});
-                    }
+            if (ilkSatir) {
+                line = line.replace("\uFEFF", ""); // BOM Temizliği
+                ilkSatir = false;
+                if (line.toLowerCase().contains("ad") || line.toLowerCase().contains("tc")) {
+                    continue; // Başlık satırını atla
                 }
             }
-            
-            
-            if (!personelListesi.isEmpty()) {
-                dao.PersonelDAO dao = new dao.PersonelDAO();
-                boolean basarili = dao.topluPersonelEkle(personelListesi);
 
-                if (basarili) {
-                    javax.swing.JOptionPane.showMessageDialog(this, 
-                        personelListesi.size() + " adet personel izin bilgileriyle aktarıldı!", 
-                        "Başarılı", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    javax.swing.JOptionPane.showMessageDialog(this, "Veritabanına kaydederken hata oluştu.", "Hata", javax.swing.JOptionPane.ERROR_MESSAGE);
+            // CSV Ayırıcı
+            String[] veriler = line.contains(";") ? line.split(";", -1) : line.split(",", -1);
+
+            if (veriler.length >= 6) {
+                // mrv.csv Dosyasındaki kolon sırası:
+                // [0]: TC NO, [1]: Ad, [2]: Soyad, [3]: Şube, [4]: Görev, [5]: İşe Giriş Tarihi, [6]: Hak Edilen, [7]: Kullanılan, [8]: Kalan
+                String tcNo = veriler[0].trim().replaceAll("[^0-9]", "");
+                String ad = veriler[1].trim(); 
+                String soyad = veriler[2].trim(); 
+                String sube = veriler[3].trim();
+                String gorev = veriler[4].trim();
+                String iseGirisTarihi = veriler[5].trim();
+
+                int hakEdilen = 0, kullanilan = 0, kalan = 0;
+                
+                try {
+                    if (veriler.length > 6 && !veriler[6].trim().isEmpty()) 
+                        hakEdilen = Integer.parseInt(veriler[6].trim().replaceAll("[^0-9]", ""));
+                    if (veriler.length > 7 && !veriler[7].trim().isEmpty()) 
+                        kullanilan = Integer.parseInt(veriler[7].trim().replaceAll("[^0-9]", ""));
+                    if (veriler.length > 8 && !veriler[8].trim().isEmpty()) 
+                        kalan = Integer.parseInt(veriler[8].trim().replaceAll("[^0-9]", ""));
+                } catch (Exception e) {
+                    // Dönüştürme hatasında 0 kalır
                 }
-            } else {
-                javax.swing.JOptionPane.showMessageDialog(this, "Geçerli veri bulunamadı.", "Uyarı", javax.swing.JOptionPane.WARNING_MESSAGE);
-            }
 
-        } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Hata: " + e.getMessage(), "Hata", javax.swing.JOptionPane.ERROR_MESSAGE);
+                if (!ad.isEmpty() || !soyad.isEmpty()) {
+                    // PersonelDAO.topluPersonelEkle metodunun beklediği 20 elemanlı dizi yapısı:
+                    Object[] row = new Object[20];
+                    row[1] = ad;             // p[1] -> Ad
+                    row[2] = soyad;          // p[2] -> Soyad
+                    row[3] = tcNo;           // p[3] -> TCNo
+                    row[5] = sube;           // p[5] -> Şube
+                    row[6] = iseGirisTarihi; // p[6] -> İşe Giriş Tarihi
+                    row[7] = gorev;          // p[7] -> Görev
+                    
+                    row[8] = 0; row[9] = 0; row[10] = 0; row[11] = 0; 
+                    row[12] = 0; row[13] = 0; row[14] = 0; row[15] = 0; row[16] = 0;
+                    
+                    row[17] = hakEdilen;     // p[17] -> Hak Edilen
+                    row[18] = kullanilan;     // p[18] -> Kullanılan
+                    row[19] = kalan;          // p[19] -> Kalan
+
+                    personelListesi.add(row);
+                }
+            }
         }
-    }
-  // TODO add your handling code here:
-    }//GEN-LAST:event_btnExcelAktarActionPerformed
 
+        if (!personelListesi.isEmpty()) {
+            dao.PersonelDAO dao = new dao.PersonelDAO();
+            boolean basarili = dao.topluPersonelEkle(personelListesi);
+
+            if (basarili) {
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    personelListesi.size() + " adet personel başarıyla aktarıldı!", 
+                    "Başarılı", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, "Veritabanına kaydederken hata oluştu.", "Hata", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, "Geçerli veri bulunamadı.", "Uyarı", javax.swing.JOptionPane.WARNING_MESSAGE);
+        }
+
+    } catch (Exception e) {
+        javax.swing.JOptionPane.showMessageDialog(this, "Hata: " + e.getMessage(), "Hata", javax.swing.JOptionPane.ERROR_MESSAGE);
+    }
+}
+   
+    }//GEN-LAST:event_btnExcelAktarActionPerformed
+    
     private void btnpersonelekleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnpersonelekleActionPerformed
- {
+                                         
     javax.swing.JTextField txtTcNo = new javax.swing.JTextField();
     javax.swing.JTextField txtAd = new javax.swing.JTextField();
     javax.swing.JTextField txtSoyad = new javax.swing.JTextField();
-    javax.swing.JTextField txtSube = new javax.swing.JTextField();
+    
+    // Şube alanı JComboBox yapıldı ve yazılabilir kılındı
+    javax.swing.JComboBox<String> cmbSube = new javax.swing.JComboBox<>();
+    cmbSube.setEditable(true);
+    
+    // Veritabanındaki kayıtlı şubeler yükleniyor
+    PersonelDAO dao = new PersonelDAO();
+    java.util.List<String> subeler = dao.subeleriGetir();
+    if (subeler != null) {
+        for (String sube : subeler) {
+            cmbSube.addItem(sube);
+        }
+    }
+
     javax.swing.JTextField txtGorev = new javax.swing.JTextField();
     javax.swing.JTextField txtIseGiris = new javax.swing.JTextField();
     javax.swing.JTextField txtHakEdilenIzin = new javax.swing.JTextField("14");
@@ -484,7 +524,7 @@ javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
     panel.add(new javax.swing.JLabel("TC No:")); panel.add(txtTcNo);
     panel.add(new javax.swing.JLabel("Personel Adı:")); panel.add(txtAd);
     panel.add(new javax.swing.JLabel("Personel Soyadı:")); panel.add(txtSoyad);
-    panel.add(new javax.swing.JLabel("Şube:")); panel.add(txtSube);
+    panel.add(new javax.swing.JLabel("Şube:")); panel.add(cmbSube); // JComboBox panele eklendi
     panel.add(new javax.swing.JLabel("Görev:")); panel.add(txtGorev);
     panel.add(new javax.swing.JLabel("İşe Giriş Tarihi (YYYY-AA-GG):")); panel.add(txtIseGiris);
     panel.add(new javax.swing.JLabel("Hak Edilen İzin Günü:")); panel.add(txtHakEdilenIzin);
@@ -501,14 +541,18 @@ javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
             yeniPersonel.setTcNo(txtTcNo.getText().trim());
             yeniPersonel.setAd(txtAd.getText().trim());
             yeniPersonel.setSoyad(txtSoyad.getText().trim());
-            yeniPersonel.setSube(txtSube.getText().trim());
+            
+            // Seçilen veya elle yazılan şube adı alınıyor
+            Object secilenSube = cmbSube.getSelectedItem();
+            String subeAdi = (secilenSube != null) ? secilenSube.toString().trim() : "";
+            yeniPersonel.setSube(subeAdi);
+
             yeniPersonel.setGorev(txtGorev.getText().trim());
             yeniPersonel.setIseGirisTarihi(txtIseGiris.getText().trim());
             
             int hakEdilen = Integer.parseInt(txtHakEdilenIzin.getText().trim());
             yeniPersonel.setHakEdilenIzin(hakEdilen);
 
-            PersonelDAO dao = new PersonelDAO();
             boolean basarili = dao.personelEkle(yeniPersonel);
 
             if (basarili) {
@@ -520,9 +564,8 @@ javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
             javax.swing.JOptionPane.showMessageDialog(this, "Lütfen İzin Gününü sayı olarak giriniz!", "Hata", javax.swing.JOptionPane.WARNING_MESSAGE);
         }
     }
-
     }//GEN-LAST:event_btnpersonelekleActionPerformed
-    }
+
    public static void main(String args[]) {
         try {
   
