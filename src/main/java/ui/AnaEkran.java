@@ -567,20 +567,22 @@ if (userSelection == javax.swing.JFileChooser.APPROVE_OPTION) {
     }//GEN-LAST:event_btnpersonelekleActionPerformed
 
    public static void main(String args[]) {
-        try {
-  
-            com.formdev.flatlaf.themes.FlatMacDarkLaf.setup();
-        } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(AnaEkran.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-    new PersonelDAO().otomatikYillikIzinGuncelle();
-        }
+    try {
+        com.formdev.flatlaf.FlatDarkLaf.setup();
         
         
-
-        java.awt.EventQueue.invokeLater(() -> new AnaEkran().setVisible(true));
+        javax.swing.UIManager.put("Button.arc", 12);          
+        javax.swing.UIManager.put("Component.arc", 10);        
+        javax.swing.UIManager.put("ProgressBar.arc", 10);
+        javax.swing.UIManager.put("TextComponent.arc", 10);
+        javax.swing.UIManager.put("Table.rowHeight", 30);     
+        javax.swing.UIManager.put("TableHeader.height", 35);   
+    } catch (Exception ex) {
+        java.util.logging.Logger.getLogger(AnaEkran.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
     }
 
-
+    java.awt.EventQueue.invokeLater(() -> new AnaEkran().setVisible(true));
+}
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel LbLAd;
     private javax.swing.JLabel LbLGorev;

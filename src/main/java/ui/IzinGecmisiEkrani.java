@@ -22,10 +22,31 @@ private DefaultTableModel model;
 public IzinGecmisiEkrani() {
     initComponents();
 
+    this.setDefaultCloseOperation(javax.swing.JFrame.DISPOSE_ON_CLOSE); 
+    this.setLocationRelativeTo(null);
+
     model = (DefaultTableModel) jTable1.getModel();
+    setTitle("Personel İzin Geçmişi Raporu");
+    setLocationRelativeTo(null); 
+    setDefaultCloseOperation(javax.swing.JFrame.DISPOSE_ON_CLOSE); 
 
+    bntExcel.setText("📊 EXCEL'E AKTAR");
+    bntExcel.setBackground(new java.awt.Color(40, 167, 69)); 
+    bntExcel.setForeground(java.awt.Color.WHITE);
+    bntExcel.setFocusPainted(false);
+
+    btnPdf.setText("📄 PDF / YAZDIR");
+    btnPdf.setBackground(new java.awt.Color(220, 53, 69)); 
+    btnPdf.setForeground(java.awt.Color.WHITE);
+    btnPdf.setFocusPainted(false);
+
+    jTable1.setRowHeight(28);
+    jTable1.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
+    jTable1.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+    jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+
+    model = (DefaultTableModel) jTable1.getModel();
     cmbSube.removeAllItems();
-
     cmbSube.addItem("Tümü");
     cmbYil.removeAllItems();
     cmbYil.addItem("Tümü");
@@ -35,23 +56,15 @@ public IzinGecmisiEkrani() {
     
     cmbAy.removeAllItems();
     cmbAy.addItem("Tümü");
-    cmbAy.addItem("1");
-    cmbAy.addItem("2");
-    cmbAy.addItem("3");
-    cmbAy.addItem("4");
-    cmbAy.addItem("5");
-    cmbAy.addItem("6");
-    cmbAy.addItem("7");
-    cmbAy.addItem("8");
-    cmbAy.addItem("9");
-    cmbAy.addItem("10");
-    cmbAy.addItem("11");
-    cmbAy.addItem("12");
-    PersonelDAO dao = new PersonelDAO();
+    for (int i = 1; i <= 12; i++) {
+        cmbAy.addItem(String.valueOf(i));
+    }
 
-    for (String sube : dao.subeleriGetir()) {
+    PersonelDAO pDao = new PersonelDAO();
+    for (String sube : pDao.subeleriGetir()) {
         cmbSube.addItem(sube);
     }
+
     tabloyuDoldur();
 }
 
@@ -196,22 +209,19 @@ tabloyuDoldur();
         
         writer.write("\uFEFF"); // UTF-8 BOM
         
-        // Başlıklar
         for (int i = 0; i < jTable1.getColumnCount(); i++) {
             writer.write(jTable1.getColumnName(i) + (i == jTable1.getColumnCount() - 1 ? "" : ";"));
         }
         writer.write("\n");
         
-        // Satırlar
+        
         for (int row = 0; row < jTable1.getRowCount(); row++) {
             for (int col = 0; col < jTable1.getColumnCount(); col++) {
                 Object val = jTable1.getValueAt(row, col);
                 String cellValue = (val != null ? val.toString() : "");
                 
-                // Tarih sütunu ise (genellikle 3. indeks yani İzin Tarihi) veya tarih içeriyorsa:
-                // Excel'in ### yapmasını engellemek için tırnak içine alıyoruz
                 if (col == 3 || cellValue.matches("\\d{4}-\\d{2}-\\d{2}")) {
-                    cellValue = "\"" + cellValue + "\t\""; // Metin formatına zorlar
+                    cellValue = "\"" + cellValue + "\t\""; 
                 }
                 
                 writer.write(cellValue + (col == jTable1.getColumnCount() - 1 ? "" : ";"));
@@ -256,8 +266,12 @@ tabloyuDoldur();
     List<IzinGecmisi> liste = dao.tumIzinGecmisiDetayliGetir();
 
     for (IzinGecmisi g : liste) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        String tarihStr = (g.getIzinTarihi() != null) ? sdf.format(g.getIzinTarihi()) : "";
+        // YENİ HALİ:
+        SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat gorunumFormat = new SimpleDateFormat("dd.MM.yyyy"); 
+
+        String tarihStr = (g.getIzinTarihi() != null) ? dbFormat.format(g.getIzinTarihi()) : "";
+        String gorunenTarih = (g.getIzinTarihi() != null) ? gorunumFormat.format(g.getIzinTarihi()) : "";
         boolean subeUygungun = secilenSube.equals("Tümü") || g.getSube().equals(secilenSube);
         boolean yilUygun = true;
         boolean ayUygun = true;
@@ -285,19 +299,13 @@ tabloyuDoldur();
                 g.getAd(),
                 g.getSoyad(),
                 g.getSube(),
+                gorunenTarih,
                 g.getIzinTarihi(),
                 g.getGunSayisi(),
                 g.getAciklama()
             });
         }
     }
-
-    System.out.println("--- AYLIK / YILLIK İZİN ÖZETİ ---");
-    List<String> ozetler = dao.aylikIzinOzetGetir(1); 
-    for (String ozet : ozetler) {
-        System.out.println(ozet);
-    }
-
 }
 
 
